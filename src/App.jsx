@@ -10,48 +10,82 @@ const App = () => {
   const [isRsvpOpen, setIsRsvpOpen] = useState(true)
   const [sparkles, setSparkles] = useState([])
 
-  // Gera purpurina
+  // Gera purpurina: cada estrela executa o `twinkle` uma vez; no fim do `animationend` teleportamos
   useEffect(() => {
-    const generateSparkles = () => {
-      const newSparkles = []
-      // palette: gold, white, silver, peach, lavender with weighted probabilities
-      for (let i = 0; i < 160; i++) {
-        const p = Math.random()
-        let color = '#ffd700' // gold
-        if (p < 0.45) color = '#ffd700'
-        else if (p < 0.75) color = '#ffffff'
-        else if (p < 0.9) color = '#c0c0c0' // silver
-        else if (p < 0.96) color = '#ffd1e6' // soft peach/pink
-        else color = '#dcd3ff' // soft lavender
+    const newSparkles = []
+    for (let i = 0; i < 160; i++) {
+      const p = Math.random()
+      let color = '#ffd700'
+      if (p < 0.45) color = '#ffd700'
+      else if (p < 0.75) color = '#ffffff'
+      else if (p < 0.9) color = '#c0c0c0'
+      else if (p < 0.96) color = '#ffd1e6'
+      else color = '#dcd3ff'
 
-        // size: more variety (1 - 5px)
-        const size = Math.random() * 4 + 1
-        // depth layer for z-index and animation subtlety
-        const z = Math.random() < 0.6 ? 0 : (Math.random() < 0.5 ? 1 : 2)
+      const size = Math.random() * 4 + 1
+      const z = Math.random() < 0.6 ? 0 : (Math.random() < 0.5 ? 1 : 2)
+      let opacity
+      if (color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
+      else if (color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
+      else if (color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
+      else opacity = Math.random() * 0.5 + 0.2
 
-        // opacity ranges tuned per color
-        let opacity
-        if (color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
-        else if (color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
-        else if (color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
-        else opacity = Math.random() * 0.5 + 0.2
-
-        newSparkles.push({
-          id: i,
-          left: Math.random() * 100,
-          top: Math.random() * 100,
-          size,
-          delay: Math.random() * 6,
-          duration: Math.random() * 2.5 + 0.8,
-          opacity,
-          color,
-          z
-        })
-      }
-      setSparkles(newSparkles)
+      newSparkles.push({
+        id: i,
+        left: Math.random() * 94 + 3,
+        top: Math.random() * 94 + 3,
+        size,
+        duration: Math.random() * 2.5 + 0.8,
+        delay: Math.random() * 1.2,
+        opacity,
+        color,
+        z,
+        tick: 0
+      })
     }
-    generateSparkles()
+
+    setSparkles(newSparkles)
+
+    return () => {
+      // nothing to cleanup since we're not using timers here
+    }
   }, [])
+
+  const handleAnimationEnd = (id) => {
+    setSparkles((prev) => prev.map((s) => {
+      if (s.id !== id) return s
+
+      // find a new position sufficiently far from previous
+      const maxTries = 12
+      let left, top, tries = 0
+      const minDistance = 6
+      do {
+        left = Math.random() * 94 + 3
+        top = Math.random() * 94 + 3
+        const dx = Math.abs(left - s.left)
+        const dy = Math.abs(top - s.top)
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist >= minDistance) break
+        tries++
+      } while (tries < maxTries)
+
+      let opacity
+      if (s.color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
+      else if (s.color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
+      else if (s.color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
+      else opacity = Math.random() * 0.5 + 0.2
+
+      return {
+        ...s,
+        left,
+        top,
+        opacity,
+        duration: Math.random() * 2.5 + 0.8,
+        delay: Math.random() * 0.6,
+        tick: (s.tick || 0) + 1
+      }
+    }))
+  }
 
   function calculateTimeLeft() {
     const now = new Date().getTime()
@@ -113,16 +147,19 @@ const App = () => {
             style={{
               left: `${sparkle.left}%`,
               top: `${sparkle.top}%`,
+              // center the sparkle at the left/top point
+              transform: 'translate(-50%, -50%)',
               width: `${sparkle.size}px`,
               height: `${sparkle.size}px`,
               background: sparkle.color,
               boxShadow: `0 0 ${Math.max(2, sparkle.size * 2)}px ${sparkle.color}`,
-              animation: `twinkle ${sparkle.duration}s ease-in-out infinite`,
+              animation: sparkle.hidden ? 'none' : `twinkle ${sparkle.duration}s ease-in-out infinite`,
               animationDelay: `${sparkle.delay}s`,
-              opacity: sparkle.opacity,
+              opacity: sparkle.hidden ? 0 : sparkle.opacity,
               zIndex: sparkle.z,
               mixBlendMode: 'screen',
-              filter: sparkle.z === 2 ? 'blur(0.3px)' : 'none'
+              filter: sparkle.z === 2 ? 'blur(0.3px)' : 'none',
+              transition: `opacity 0.6s linear`
             }}
           />
         ))}
@@ -157,9 +194,11 @@ const App = () => {
         }
 
         @keyframes twinkle {
-          0% { opacity: 0.3; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.4); }
-          100% { opacity: 0.3; transform: scale(0.8); }
+          /* keep translate so scaling occurs around the centered point */
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+          40% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+          70% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.8); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
         }
 
         @keyframes shimmer {
