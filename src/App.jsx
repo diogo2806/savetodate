@@ -9,26 +9,74 @@ const App = () => {
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft())
   const [isRsvpOpen, setIsRsvpOpen] = useState(true)
   const [sparkles, setSparkles] = useState([])
+  // Paleta de cores ampliada (tons que combinam com o site)
+  const colorPalette = [
+    '#ffd700', // gold
+    '#ffdf80', // light gold
+    '#f3e5ab', // cream
+    '#fff8e6', // soft ivory
+    '#ffd1e6', // soft peach/pink
+    '#ffb6c1', // light pink
+    '#ffb199', // warm coral
+    '#ffc9a8', // peach
+    '#ffd9b3', // champagne
+    '#d9926a', // bronze/amber
+    '#dcd3ff', // lavender
+    '#e6d6ff', // soft lilac
+    '#f7e6ff', // very pale lilac
+    '#c8f7e5', // mint
+    '#bfeee0', // soft aqua
+    '#fbe4ea', // blush
+    '#c0c0c0', // silver
+    '#ffffff'  // white
+  ]
+
+  // helpers to slightly vary hex colors
+  const hexToRgb = (hex) => {
+    const h = hex.replace('#', '')
+    const bigint = parseInt(h, 16)
+    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 }
+  }
+  const rgbToHex = (r, g, b) => '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('')
+  const blendHex = (hex1, hex2, t) => {
+    const a = hexToRgb(hex1)
+    const b = hexToRgb(hex2)
+    const r = Math.round(a.r + (b.r - a.r) * t)
+    const g = Math.round(a.g + (b.g - a.g) * t)
+    const bl = Math.round(a.b + (b.b - a.b) * t)
+    return rgbToHex(r, g, bl)
+  }
+
+  const pickColor = () => {
+    const base = colorPalette[Math.floor(Math.random() * colorPalette.length)]
+    // 40% chance to slightly vary the base color towards white (lighten) or a tiny shade
+    if (Math.random() < 0.4) {
+      const t = Math.random() * 0.28 + 0.06 // 0.06..0.34
+      // randomly choose to blend with white or a warm gold for variety
+      const blendTarget = Math.random() < 0.5 ? '#ffffff' : '#fff5d1'
+      return blendHex(base, blendTarget, t)
+    }
+    return base
+  }
+
+  const getOpacityForColor = (color) => {
+    // Slightly stronger opacity for gold/cream, softer for whites and pastels
+    if (!color) return Math.random() * 0.6 + 0.2
+    if (color === '#ffd700' || color === '#ffdf80' || color === '#f3e5ab') return Math.random() * 0.45 + 0.5
+    if (color === '#fff8e6' || color === '#ffffff') return Math.random() * 0.5 + 0.2
+    if (color === '#c0c0c0') return Math.random() * 0.45 + 0.25
+    // pastel tones
+    return Math.random() * 0.5 + 0.25
+  }
 
   // Gera purpurina: cada estrela executa o `twinkle` uma vez; no fim do `animationend` teleportamos
   useEffect(() => {
     const newSparkles = []
     for (let i = 0; i < 160; i++) {
-      const p = Math.random()
-      let color = '#ffd700'
-      if (p < 0.45) color = '#ffd700'
-      else if (p < 0.75) color = '#ffffff'
-      else if (p < 0.9) color = '#c0c0c0'
-      else if (p < 0.96) color = '#ffd1e6'
-      else color = '#dcd3ff'
-
+      const color = pickColor()
       const size = Math.random() * 4 + 1
       const z = Math.random() < 0.6 ? 0 : (Math.random() < 0.5 ? 1 : 2)
-      let opacity
-      if (color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
-      else if (color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
-      else if (color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
-      else opacity = Math.random() * 0.5 + 0.2
+      const opacity = getOpacityForColor(color)
 
       newSparkles.push({
         id: i,
@@ -69,11 +117,7 @@ const App = () => {
         tries++
       } while (tries < maxTries)
 
-      let opacity
-      if (s.color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
-      else if (s.color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
-      else if (s.color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
-      else opacity = Math.random() * 0.5 + 0.2
+      const opacity = getOpacityForColor(s.color)
 
       return {
         ...s,
@@ -149,13 +193,18 @@ const App = () => {
               left: `${sparkle.left}%`,
               top: `${sparkle.top}%`,
               // center the sparkle at the left/top point
-              transform: 'translate(-50%, -50%)',
+              // start scaled down so it "grows" during animation
+              transform: 'translate(-50%, -50%) scale(0.2)',
               width: `${sparkle.size}px`,
               height: `${sparkle.size}px`,
               background: sparkle.color,
-              boxShadow: `0 0 ${Math.max(2, sparkle.size * 2)}px ${sparkle.color}`,
+              // stronger glow: multiple layered blurs
+              boxShadow: `0 0 ${Math.max(6, sparkle.size * 4)}px ${sparkle.color}, 0 0 ${Math.max(12, sparkle.size * 8)}px ${sparkle.color}`,
+              // expose per-sparkle peak opacity to CSS keyframes (slightly boosted)
+              ['--sparkle-opacity']: Math.min(1, sparkle.opacity * 1.3),
               animation: `twinkle ${sparkle.duration}s ease-in-out ${sparkle.delay}s 1 forwards`,
-              opacity: sparkle.opacity,
+              // keep element invisible before animation starts; animation will fade it in
+              opacity: 0,
               zIndex: sparkle.z,
               mixBlendMode: 'screen',
               filter: sparkle.z === 2 ? 'blur(0.3px)' : 'none',
@@ -194,11 +243,13 @@ const App = () => {
         }
 
         @keyframes twinkle {
-          /* keep translate so scaling occurs around the centered point */
-          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
-          40% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-          70% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.8); }
-          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+          /* keep translate so scaling occurs around the centered point
+             use CSS var --sparkle-opacity to let each sparkle control its peak opacity */
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+          /* boost peak scale and brightness so sparkles grow noticeably */
+          40% { opacity: calc(var(--sparkle-opacity, 1) * 1.25); transform: translate(-50%, -50%) scale(1.6); }
+          70% { opacity: calc(var(--sparkle-opacity, 1) * 0.6); transform: translate(-50%, -50%) scale(0.9); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
         }
 
         @keyframes shimmer {
