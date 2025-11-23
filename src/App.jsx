@@ -70,7 +70,7 @@ const App = () => {
 
   const handleWhatsAppClick = () => {
     const phoneNumber = '5521982286282'
-    const message = encodeURIComponent('Olá! Gostaria de confirmar minha presença nos 15 anos da Isabella! ✨👑')
+    const message = encodeURIComponent('Olá! Gostaria de confirmar minha presença nos 15 anos da Isabella! 🎉✨😊')
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
   }
 
