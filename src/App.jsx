@@ -56,9 +56,9 @@ const App = () => {
       if (s.id !== id) return s
 
       // find a new position sufficiently far from previous
-      const maxTries = 12
+      const maxTries = 50
       let left, top, tries = 0
-      const minDistance = 6
+      const minDistance = 12
       do {
         left = Math.random() * 94 + 3
         top = Math.random() * 94 + 3
@@ -142,8 +142,9 @@ const App = () => {
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         {sparkles.map((sparkle) => (
           <div
-            key={sparkle.id}
+            key={`${sparkle.id}-${sparkle.tick ?? 0}`}
             className="absolute rounded-full"
+            onAnimationEnd={() => handleAnimationEnd(sparkle.id)}
             style={{
               left: `${sparkle.left}%`,
               top: `${sparkle.top}%`,
@@ -153,9 +154,8 @@ const App = () => {
               height: `${sparkle.size}px`,
               background: sparkle.color,
               boxShadow: `0 0 ${Math.max(2, sparkle.size * 2)}px ${sparkle.color}`,
-              animation: sparkle.hidden ? 'none' : `twinkle ${sparkle.duration}s ease-in-out infinite`,
-              animationDelay: `${sparkle.delay}s`,
-              opacity: sparkle.hidden ? 0 : sparkle.opacity,
+              animation: `twinkle ${sparkle.duration}s ease-in-out ${sparkle.delay}s 1 forwards`,
+              opacity: sparkle.opacity,
               zIndex: sparkle.z,
               mixBlendMode: 'screen',
               filter: sparkle.z === 2 ? 'blur(0.3px)' : 'none',
