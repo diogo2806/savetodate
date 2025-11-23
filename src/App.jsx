@@ -70,8 +70,11 @@ const App = () => {
 
   const handleWhatsAppClick = () => {
     const phoneNumber = '5521982286282'
-    const message = encodeURIComponent('Olá! Gostaria de confirmar minha presença nos 15 anos da Isabella! 🎉✨😊')
-    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank')
+    // Use Unicode escapes to avoid file encoding issues that can turn emojis into � characters
+    const messageText = 'Ol\u00E1! Gostaria de confirmar minha presen\u00E7a nos 15 anos da Isabella! ' + '\u{1F389}' + '\u2728' + '\u{1F60A}'
+    const message = encodeURIComponent(messageText)
+    // Use api.whatsapp.com endpoint which works well on desktop and mobile
+    window.open(`https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`, '_blank')
   }
 
   return (
