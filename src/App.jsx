@@ -284,16 +284,14 @@ const App = () => {
                     onClick={handleWhatsAppClick}
                     className="bg-[#1a1614] hover:bg-[#2c241b] text-[#ffd700] font-cinzel font-bold py-3 px-6 md:py-4 md:px-12 rounded-full transition-all duration-300 flex items-center gap-2 md:gap-3 text-sm md:text-lg uppercase tracking-wider whitespace-nowrap border border-[#ffd700]/20"
                   >
-                     <MessageCircle className="w-5 h-5 md:w-6 md:h-6" /> Confirmar Presença
+                     <MessageCircle className="w-5 h-5 md:w-6 md:h-6" /> Clique aqui para confirmar <br/>presença no dia 17/01/2026
                   </button>
                 </div>
                 <div className="mt-3 flex flex-col items-center">
                   <span className="inline-block gold-shimmer-bg px-4 py-1 rounded-full text-xs md:text-sm font-playfair text-[#1a1208] font-semibold shadow-md">
-                    Confirmar presença até 17/12/2025
+                    Após confirmação, informações sobre convite e local serão enviadas.
                   </span>
-                  <p className="mt-2 text-[10px] md:text-xs text-[#f3e5ab]/80 italic text-center max-w-xs font-lato">
-                    * Após confirmação, informações sobre convite e local serão enviadas.
-                  </p>
+                
                 </div>
               </div>
             ) : (
@@ -305,9 +303,9 @@ const App = () => {
         </div>
 
         {/* Footer */}
-        <footer className="text-[#ffd700]/70 font-cinzel text-[9px] md:text-[10px] z-10 font-bold tracking-widest text-center mt-2">
-           Com carinho, Família da Isabella
-        </footer>
+          <footer className="text-[#ffd700]/70 font-cinzel text-[12px] md:text-[14px] z-10 font-bold tracking-widest text-center mt-2">
+            Com carinho, Família da Isabella
+          </footer>
 
       </div>
     </div>
