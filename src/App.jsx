@@ -14,15 +14,38 @@ const App = () => {
   useEffect(() => {
     const generateSparkles = () => {
       const newSparkles = []
-      for (let i = 0; i < 80; i++) {
+      // palette: gold, white, silver, peach, lavender with weighted probabilities
+      for (let i = 0; i < 160; i++) {
+        const p = Math.random()
+        let color = '#ffd700' // gold
+        if (p < 0.45) color = '#ffd700'
+        else if (p < 0.75) color = '#ffffff'
+        else if (p < 0.9) color = '#c0c0c0' // silver
+        else if (p < 0.96) color = '#ffd1e6' // soft peach/pink
+        else color = '#dcd3ff' // soft lavender
+
+        // size: more variety (1 - 5px)
+        const size = Math.random() * 4 + 1
+        // depth layer for z-index and animation subtlety
+        const z = Math.random() < 0.6 ? 0 : (Math.random() < 0.5 ? 1 : 2)
+
+        // opacity ranges tuned per color
+        let opacity
+        if (color === '#ffd700') opacity = Math.random() * 0.5 + 0.45
+        else if (color === '#ffffff') opacity = Math.random() * 0.6 + 0.2
+        else if (color === '#c0c0c0') opacity = Math.random() * 0.5 + 0.25
+        else opacity = Math.random() * 0.5 + 0.2
+
         newSparkles.push({
           id: i,
           left: Math.random() * 100,
           top: Math.random() * 100,
-          size: Math.random() * 3 + 1,
-          delay: Math.random() * 5,
-          duration: Math.random() * 2 + 1,
-          opacity: Math.random()
+          size,
+          delay: Math.random() * 6,
+          duration: Math.random() * 2.5 + 0.8,
+          opacity,
+          color,
+          z
         })
       }
       setSparkles(newSparkles)
@@ -86,16 +109,20 @@ const App = () => {
         {sparkles.map((sparkle) => (
           <div
             key={sparkle.id}
-            className="absolute rounded-full bg-[#ffd700]"
+            className="absolute rounded-full"
             style={{
               left: `${sparkle.left}%`,
               top: `${sparkle.top}%`,
               width: `${sparkle.size}px`,
               height: `${sparkle.size}px`,
-              boxShadow: `0 0 ${sparkle.size * 2}px #ffd700`,
+              background: sparkle.color,
+              boxShadow: `0 0 ${Math.max(2, sparkle.size * 2)}px ${sparkle.color}`,
               animation: `twinkle ${sparkle.duration}s ease-in-out infinite`,
               animationDelay: `${sparkle.delay}s`,
-              opacity: sparkle.opacity
+              opacity: sparkle.opacity,
+              zIndex: sparkle.z,
+              mixBlendMode: 'screen',
+              filter: sparkle.z === 2 ? 'blur(0.3px)' : 'none'
             }}
           />
         ))}
@@ -156,9 +183,9 @@ const App = () => {
         
         {/* Header */}
         <div className="text-center w-full flex-shrink-0">
-          <div className="flex justify-center mb-1 md:mb-2">
+           <div className="flex justify-center mb-1 md:mb-2">
              <Star className="text-[#ffd700] w-4 h-4 md:w-6 md:h-6 animate-pulse" fill="#ffd700" />
-          </div>
+           </div>
 
           <p className="font-lato tracking-[0.3em] uppercase text-[10px] md:text-sm text-[#ffd700] font-bold mb-1 drop-shadow-md">
             Save The Date
@@ -168,17 +195,29 @@ const App = () => {
             Isabella
           </h1>
           
-          <div className="mt-2 md:mt-4 mb-1 bg-black/50 backdrop-blur-sm px-4 py-1.5 md:px-6 md:py-2 rounded-full border border-[#ffd700]/40 inline-block shadow-lg">
-            <span className="font-playfair text-sm sm:text-base md:text-2xl italic text-[#f3e5ab]">
-              15 Anos em 26 de Dezembro de 2025
-            </span>
+          <div className="mt-3 md:mt-5 mb-2 flex flex-col items-center">
+            <div className="inline-flex items-center gap-4 bg-black/60 border border-[#ffd700]/30 px-4 md:px-6 py-2 rounded-full shadow-[0_6px_30px_rgba(0,0,0,0.6)]">
+              <svg width="28" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+                <path d="M2 7l5 5 4-6 4 6 5-5v11H2V7z" fill="#FFD700" stroke="#E6BE00" strokeWidth="0.5" />
+                <circle cx="6" cy="8" r="1" fill="#FFF8DB" />
+                <circle cx="12" cy="6" r="1" fill="#FFF8DB" />
+                <circle cx="18" cy="8" r="1" fill="#FFF8DB" />
+              </svg>
+
+              <div className="flex flex-col items-start">
+                <span className="gold-metallic-text font-playfair text-2xl md:text-4xl lg:text-5xl font-bold leading-none">
+                  15 Anos
+                </span>
+              </div>
+            </div>
+
           </div>
         </div>
 
         {/* Card de Detalhes - Cores limpas e legíveis */}
         <div className="w-full max-w-[95%] bg-black/70 backdrop-blur-md border border-[#ffd700]/30 p-4 md:p-6 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex-shrink-0">
           <h2 className="font-cinzel text-lg md:text-2xl text-center text-[#ffd700] mb-4 border-b border-[#ffd700]/30 pb-3 tracking-wider">
-            A Grande Celebração
+            O Grande Dia da Isabella 
           </h2>
           
           <div className="flex flex-row justify-between items-start gap-2 md:gap-4">
@@ -248,9 +287,14 @@ const App = () => {
                      <MessageCircle className="w-5 h-5 md:w-6 md:h-6" /> Confirmar Presença
                   </button>
                 </div>
-                <p className="mt-2 font-lato text-[10px] md:text-xs text-[#ffd700]/80 italic text-center w-full max-w-xs">
-                  * Confirmar presença até <strong className="text-[#ffd700] underline">10/12/2025</strong>.
-                </p>
+                <div className="mt-3 flex flex-col items-center">
+                  <span className="inline-block gold-shimmer-bg px-4 py-1 rounded-full text-xs md:text-sm font-playfair text-[#1a1208] font-semibold shadow-md">
+                    Confirmar presença até 17/12/2025
+                  </span>
+                  <p className="mt-2 text-[10px] md:text-xs text-[#f3e5ab]/80 italic text-center max-w-xs font-lato">
+                    * Após confirmação, informações sobre convite e local serão enviadas.
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="bg-black/60 p-4 rounded-lg border border-[#ffd700]/30 text-center">
